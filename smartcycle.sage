@@ -35,7 +35,7 @@ def phi(p,m):
     return p**(m-1)*(p-1)
 
 
-def smart_filtration(f, N, p, m, k):
+def smart_filtration(f, N, p, m, k, verbose=False):
     """
     Return the p^m-filtration of a q-expansion f (p prime, m>=1) known to occur in weight k.
     We use the fact that the filtration must be congruent to k modulo phi(p^m).
@@ -48,10 +48,12 @@ def smart_filtration(f, N, p, m, k):
     if w == 0:
         w = phipm
     R = Zmod(p**m)
-    print(k)
+    if verbose:
+        print(k)
 
     while w < k:
-        print(w)
+        if verbose:
+            print(w)
         sb = sturm_bound(N, w) + 10
         if (N, p, m, w) in BASIS:
             basis = BASIS[(N, p, m, w)]
@@ -77,16 +79,12 @@ def cycle(f, N, p, m, w, verbose=False):
     if verbose:
         print("initialising")
     g = f.change_ring(R)
-    k = smart_filtration(g, N, p, m, k)
-    #print(k)
-    #print(g)
+    k = smart_filtration(g, N, p, m, k, verbose)
     for ii in range(m):
         if verbose:
             print(f"{ii+1} out of {m+1}")
         g = theta(g)
-        k = smart_filtration(g, N, p, m, k + km)
-        #print(k)
-        #print(g)
+        k = smart_filtration(g, N, p, m, k + km, verbose)
 
     if verbose:
         print("cycle calculation")
@@ -95,9 +93,7 @@ def cycle(f, N, p, m, w, verbose=False):
         if verbose:
             print(f"{ii+1} out of {phipm}") 
         g = theta(g)
-        k = smart_filtration(g, N, p, m, k + km)
-        #print(k)
-        #print(g)
+        k = smart_filtration(g, N, p, m, k + km, verbose)
         ans_list.append(k)
 
     return ans_list
