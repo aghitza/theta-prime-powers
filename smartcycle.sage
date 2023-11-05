@@ -1,17 +1,22 @@
-# Copyright (c) 2023: Miles Koumouris
+# Copyright (c) 2023: Miles Koumouris and Alex Ghitza
 
 # vi: ft=python
 
-EXP_LEN = 100
+from sage.modular.dims import sturm_bound
 
-def theta(f):
+BASIS = dict()
+
+def theta(f, m=1):
     """
     Given a power series or polynomial f in one variable q, return
     q times the derivative of f with respect to q.
     """
     R = f.parent()
     q = R.gen()
-    return q * f.derivative(q)
+    g = f
+    for _ in range(m):
+        g = q * g.derivative(q)
+    return g
 
 
 def is_in_span_of_basis(f, bas):
@@ -22,8 +27,6 @@ def is_in_span_of_basis(f, bas):
 
     Assumes that bas is echelonised.
     """
-
-    R = bas[0].parent().base_ring()
     res = sum([g * f[g.valuation()] for g in bas])
     return f == res
 
@@ -31,76 +34,71 @@ def is_in_span_of_basis(f, bas):
 def phi(p,m):
     return p**(m-1)*(p-1)
 
-def smart_filtration(f, p, m, k):
 
+def smart_filtration(f, N, p, m, k):
     """
-    Returns the p^m-filtration of a q-expansion f (p prime, m>=1).
-    We set k to be the (nonnegative representative of) equivalence class modulo phi(p^m) of the filtration
-    to speed up the calculation. If we don't know this, we set k = None.
+    Return the p^m-filtration of a q-expansion f (p prime, m>=1) known to occur in weight k.
+    We use the fact that the filtration must be congruent to k modulo phi(p^m).
+
+    TODO: this is amenable to a binary search strategy (rather than sequentially trying all
+    suitably congruent weights from the smallest possible all the way up to k).
     """
-    if k==None:
-        filt = 1
-        jump = 1
-    else:
-        t = floor(k/phi(p,m))
-        filt = k - t*phi(p,m)
-        if filt < 2:
-            filt += phi(p,m)
-        jump = phi(p,m)
-    in_class = False
+    phipm = phi(p, m)
+    w = k % phipm
+    if w == 0:
+        w = phipm
+    R = Zmod(p**m)
+    print(k)
 
-    filt = filt - jump
-    while not in_class:
-        filt = filt + jump
-        basis = [g.change_ring(Zmod(p ** m)) for g in CuspForms(Gamma1(N), filt).q_integral_basis(EXP_LEN)]
-        if basis == []:
-            continue
-        in_class = is_in_span_of_basis(f.change_ring(Zmod(p ** m)), basis)
+    while w < k:
+        print(w)
+        sb = sturm_bound(N, w) + 10
+        if (N, p, m, w) in BASIS:
+            basis = BASIS[(N, p, m, w)]
+        else:
+            C = CuspForms(Gamma1(N), w)
+            basis = [g.change_ring(R) for g in C.q_integral_basis(sb)]
+            BASIS[(N, p, m, w)] = basis
+        if is_in_span_of_basis(f.truncate_powerseries(sb), basis):
+            return w
+        w += phipm
 
-        if filt > 10000: # we shouldn't get filtrations this large for the numbers we're dealing with
-            return -1
-    return filt
+    return k
 
 
-def cycle(f, p, m, w):
+def cycle(f, N, p, m, w, verbose=False):
     """
     Returns the p^m-filtration theta cycle of f
     """
+    R = Zmod(p**m)
+    phipm = phi(p, m)
+    km = 2 + 2*phipm
     k = w
-    ans_list = []
-    i = 0
-    for i in range(m):
-        f = theta(f)
-        k+=2
-        i+=1
-    while i < phi(p,m) + m:
-        ans_list.append(smart_filtration(f,p,m,k))
-        print(f"{round(100*(i-m) / phi(p,m),2)}%")
-        f = theta(f)
-        k+=2
-        i+=1
+    if verbose:
+        print("initialising")
+    g = f.change_ring(R)
+    k = smart_filtration(g, N, p, m, k)
+    #print(k)
+    #print(g)
+    for ii in range(m):
+        if verbose:
+            print(f"{ii+1} out of {m+1}")
+        g = theta(g)
+        k = smart_filtration(g, N, p, m, k + km)
+        #print(k)
+        #print(g)
+
+    if verbose:
+        print("cycle calculation")
+    ans_list = [k]
+    for ii in range(phipm-1):
+        if verbose:
+            print(f"{ii+1} out of {phipm}") 
+        g = theta(g)
+        k = smart_filtration(g, N, p, m, k + km)
+        #print(k)
+        #print(g)
+        ans_list.append(k)
+
     return ans_list
-
-
-N = 2
-w = 8
-p = 7
-m = 2
-
-D = CuspForms(Gamma1(N), w).q_integral_basis(EXP_LEN)[0]
-#D = ModularForms(Gamma1(N), w).q_integral_basis(EXP_LEN)[0]
-print(D)
-
-
-
-
-print(f"Form of weight {w} in level {N}, looking at mod {p} ^ {m} filtration theta cycle:")
-# print(f"Reduction modulo {p} ^ {m}:")
-# print(E)
-# print(f"Theta cycle with mod {p} ^ {m} filtration:")
-print(cycle(D, p, m, w))
-
-
-
-
 
