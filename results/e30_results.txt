@@ -1,0 +1,34 @@
+sage: e30 = eisenstein_series_qexp(30, normalization="integral", prec=1000)
+
+m = 2
+
+p	0's	-1's	-2's	-3's	-4's
+
+m = 3
+
+p	0's	-1's	-2's	-3's	-4's
+11	0	16	1176	18	0
+
+m = 4
+
+p	0's	-1's	-2's	-3's	-4's
+
+
+m = 5
+
+p	0's	-1's	-2's	-3's	-4's
+
+
+m = 6
+
+p	0's	-1's	-2's	-3's	-4's
+
+
+m = 7
+
+p	0's	-1's	-2's	-3's	-4's
+
+
+m = 8
+
+p	0's	-1's	-2's	-3's	-4's
