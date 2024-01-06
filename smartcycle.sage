@@ -5,12 +5,15 @@
 from sage.libs.flint.fmpz_poly import Fmpz_poly
 from sage.modular.dims import sturm_bound
 from sage.modular.modform.vm_basis import _delta_poly, victor_miller_basis
-from sage.modular.modform.eis_series import eisenstein_series_poly
+from sage.modular.modform.eis_series import eisenstein_series_poly, eisenstein_series_qexp
 from sage.arith.all import srange
 import sys
 
-BASIS = dict()
-EIS = dict()
+if not 'BASIS' in globals():
+    BASIS = dict()
+
+if not 'EIS' in globals():
+    EIS = dict()
 
 
 def _lots_of_bases_level1(kmax, verbose=False, var=None):
@@ -212,3 +215,36 @@ def diffcycle(f, N, p, m, w, verbose=False):
     df, _ = (c[0]-s-tl).quo_rem(phipm)
     dc.append(df)
     return dc
+
+
+def cycper(a):
+    lst = []
+    for j in range(len(a)):
+        lst.append(a[j:] + a[:j])
+    return lst
+
+
+def is_same_cycle(a, b):
+    return a in cycper(b)
+
+
+def eis_list(kmin, kmax, p, m, prec=3000, verbose=False):
+    lst = []
+    for k in srange(kmin, kmax, 2):
+        if verbose:
+            print(k)
+        e = eisenstein_series_qexp(k, normalization="integral", prec=prec)
+        dc = diffcycle(e, 1, p, m, k)
+        lst.append((k, [dc.count(a) for a in range(0, min(dc)-1, -1)]))
+    return lst
+
+
+def cusp_onedim_list(p, m, prec=3000, verbose=False):
+    lst = []
+    for k in [12, 16, 18, 20, 22, 26]:
+        if verbose:
+            print(k)
+        d = CuspForms(1, k).q_integral_basis(prec)[0]
+        dc = diffcycle(d, 1, p, m, k)
+        lst.append((k, [dc.count(a) for a in range(0, min(dc)-1, -1)]))
+    return lst
