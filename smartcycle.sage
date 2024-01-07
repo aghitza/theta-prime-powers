@@ -265,3 +265,18 @@ def cusp_onedim_list(p, m, prec=3000, verbose=False):
         if verbose:
             print()
     return lst
+
+
+def cusp_list(kmin, kmax, p, m, prec=3000, verbose=False):
+    lst = []
+    for k in srange(kmin, kmax, 2):
+        for d in victor_miller_basis(k, prec, cusp_only=True):
+            label = str(k) + '.' + str(d.valuation())
+            if verbose:
+                sys.stdout.write('wt ' + label + ': ')
+                sys.stdout.flush()
+            dc = diffcycle(d, 1, p, m, k, verbose)
+            lst.append((label, [dc.count(a) for a in range(0, min(dc)-1, -1)]))
+            if verbose:
+                print()
+    return lst
