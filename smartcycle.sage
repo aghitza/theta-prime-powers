@@ -176,24 +176,35 @@ def cycle(f, N, p, m, w, verbose=False):
     else:
         km = 2 + phipm
     k = w
-    if verbose:
-        print("initialising")
     g = f.change_ring(R)
-    k = smart_filtration(g, N, p, m, k, verbose)
+    #k = smart_filtration(g, N, p, m, k, verbose)
+    k = smart_filtration(g, N, p, m, k)
+    if verbose:
+        sys.stdout.write(str(m) + ': ')
+        sys.stdout.flush()
     for ii in range(m):
         if verbose:
-            print(f"{ii+1} out of {m+1}")
+            #print(f"{ii+1} out of {m+1}")
+            sys.stdout.write(str(ii) + ' ')
+            sys.stdout.flush()
         g = theta(g)
-        k = smart_filtration(g, N, p, m, k + km, verbose)
+        #k = smart_filtration(g, N, p, m, k + km, verbose)
+        k = smart_filtration(g, N, p, m, k + km)
 
     if verbose:
-        print("cycle calculation")
+        #print("cycle calculation")
+        sys.stdout.write('NOW ' + str(phipm) + ': ')
+        sys.stdout.flush()
     ans_list = [k]
+    percent, _ = phipm.quo_rem(100)
     for ii in range(phipm-1):
-        if verbose:
-            print(f"{ii+1} out of {phipm}") 
+        if verbose and (ii % percent) == 0:
+            #print(f"{ii+1} out of {phipm}") 
+            sys.stdout.write(str(ii) + ' ')
+            sys.stdout.flush()
         g = theta(g)
-        k = smart_filtration(g, N, p, m, k + km, verbose)
+        #k = smart_filtration(g, N, p, m, k + km, verbose)
+        k = smart_filtration(g, N, p, m, k + km)
         ans_list.append(k)
 
     return ans_list
@@ -232,10 +243,13 @@ def eis_list(kmin, kmax, p, m, prec=3000, verbose=False):
     lst = []
     for k in srange(kmin, kmax, 2):
         if verbose:
-            print(k)
+            sys.stdout.write('wt ' + str(k) + ': ')
+            sys.stdout.flush()
         e = eisenstein_series_qexp(k, normalization="integral", prec=prec)
-        dc = diffcycle(e, 1, p, m, k)
+        dc = diffcycle(e, 1, p, m, k, verbose)
         lst.append((k, [dc.count(a) for a in range(0, min(dc)-1, -1)]))
+        if verbose:
+            print()
     return lst
 
 
@@ -243,8 +257,11 @@ def cusp_onedim_list(p, m, prec=3000, verbose=False):
     lst = []
     for k in [12, 16, 18, 20, 22, 26]:
         if verbose:
-            print(k)
+            sys.stdout.write('wt ' + str(k) + ': ')
+            sys.stdout.flush()
         d = CuspForms(1, k).q_integral_basis(prec)[0]
-        dc = diffcycle(d, 1, p, m, k)
+        dc = diffcycle(d, 1, p, m, k, verbose)
         lst.append((k, [dc.count(a) for a in range(0, min(dc)-1, -1)]))
+        if verbose:
+            print()
     return lst
